@@ -12,6 +12,12 @@
 </a>
     </div>
 
+    @if(session('success'))
+        <div class="alert alert-success border-0 shadow-sm rounded-3 mb-4">
+            <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+        </div>
+    @endif
+
     <!-- Tarjeta Blanca de la Tabla -->
     <div class="card border-0 shadow-sm rounded-3">
         <div class="card-body p-0">
@@ -40,9 +46,22 @@
                     </span>
                     </td>
                     <td class="pe-4 py-3 text-end">
-                 <!-- Este botón ahora te llevará a ver los resultados del estudio -->
-                <a href="{{ route('estudios.show', $estudio->id) }}" class="btn btn-sm btn-outline-primary">Ver Resultados</a>
-            </td>
+    <div class="d-flex justify-content-end gap-2">
+        <!-- Botón Ver Resultados -->
+        <a href="{{ route('estudios.show', $estudio->id) }}" class="btn btn-sm btn-outline-primary">
+            Ver Resultados
+        </a>
+
+        <!-- Botón Eliminar con Advertencia -->
+        <form action="{{ route('estudios.destroy', $estudio->id) }}" method="POST" onsubmit="return confirm('ADVERTENCIA DE SEGURIDAD:\n\n¿Estás completamente seguro de que deseas eliminar el proyecto \'{{ $estudio->nombre_proyecto }}\'?\n\nEsta acción es DEFINITIVA e IRREVERSIBLE.');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Estudio">
+                <i class="bi bi-trash3"></i>
+            </button>
+        </form>
+    </div>
+</td>
         </tr>
     @endforeach
 </tbody>

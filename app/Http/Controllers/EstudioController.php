@@ -29,7 +29,7 @@ class EstudioController extends Controller
         'opex' => 'required|numeric',
     ]);
 
-    // 1. CÁLCULO MATEMÁTICO EN LARAVEL (Ejemplo simplificado)
+    // 1. CÁLCULO MATEMÁTICO (Básico y simplificado)
     $flujoOperativo = $request->ingresos - $request->opex;
     
     // Cálculo básico de VPN (Simplificado a 1 año para el prototipo)
@@ -103,5 +103,25 @@ class EstudioController extends Controller
     {
     $estudio = Estudio::findOrFail($id);
     return view('estudios.show', compact('estudio'));
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        
+        $estudio = Estudio::findOrFail($id);
+        $nombre_proyecto = $estudio->nombre_proyecto;
+
+        // 2. Registrar la eliminación antes de borrar el estudio
+        LogAuditoria::create([
+            'user_id' => Auth::id(),
+            'accion' => "Eliminación del estudio: " . $nombre_proyecto,
+            'ip_address' => $request->ip()
+        ]);
+
+        
+        $estudio->delete();
+
+        
+        return redirect()->route('dashboard')->with('success', 'El estudio ha sido eliminado correctamente.');
     }
 }
