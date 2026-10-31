@@ -10,10 +10,10 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('estudios', function (Blueprint $table) {
+{
+    Schema::create('estudios', function (Blueprint $table) {
         $table->id();
-        $table->string('nombre_proyecto');
+        $table->string('nombre_proyecto'); // Nombre para que salga en el dashboard
         $table->decimal('inflacion', 5, 2);
         $table->decimal('tasa_cambio', 10, 2);
         $table->decimal('capex', 15, 2);
@@ -22,8 +22,8 @@ return new class extends Migration
         $table->decimal('opex', 15, 2);
         $table->string('estado')->default('Borrador');
         $table->timestamps(); // Crea fecha_creacion automáticamente
-        });
-    }
+    });
+}
 
     /**
      * Reverse the migrations.
