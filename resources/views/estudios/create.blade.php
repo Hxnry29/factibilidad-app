@@ -2,7 +2,7 @@
 
 @section('content')
 <style>
-    /* Estilos para igualar tu mockup exactamente */
+    
     .stepper-circle {
         width: 35px; height: 35px;
         border-radius: 50%;
@@ -40,6 +40,15 @@
     <!-- EL FORMULARIO FUNCIONAL -->
     <form action="{{ route('estudios.store') }}" method="POST">
         @csrf <!-- Token de seguridad obligatorio en Laravel -->
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+                </ul>
+            </div>
+        @endif
         
         <!-- Campo extra necesario para guardar en la BD -->
         <div class="mb-4" style="max-width: 400px;">

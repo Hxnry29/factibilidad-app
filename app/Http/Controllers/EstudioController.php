@@ -5,6 +5,7 @@ use App\Models\Estudio;
 use Illuminate\Http\Request;
 use App\Models\LogAuditoria;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class EstudioController extends Controller
 {
@@ -16,29 +17,91 @@ class EstudioController extends Controller
 
     // Guardar los datos en la base de datos
     public function store(Request $request)
-    {
-        //Validar que envíen números
-        $request->validate([
-            'nombre_proyecto' => 'required|string|max:255',
-            'inflacion' => 'required|numeric',
-            'tasa_cambio' => 'required|numeric',
-            'capex' => 'required|numeric',
-            'plazo_meses' => 'required|numeric',
-            'ingresos' => 'required|numeric',
-            'opex' => 'required|numeric',
-        ]);
+{
+    
+    $request->validate([
+        'nombre_proyecto' => 'required|string|max:255',
+        'inflacion' => 'required|numeric',
+        'tasa_cambio' => 'required|numeric',
+        'capex' => 'required|numeric',
+        'plazo_meses' => 'required|numeric',
+        'ingresos' => 'required|numeric',
+        'opex' => 'required|numeric',
+    ]);
 
-        //Guardar en la base de datos
-        $estudio = Estudio::create($request->all());
+    // 1. CÁLCULO MATEMÁTICO EN LARAVEL (Ejemplo simplificado)
+    $flujoOperativo = $request->ingresos - $request->opex;
+    
+    // Cálculo básico de VPN (Simplificado a 1 año para el prototipo)
+    $tasaDescuento = 0.12; 
+    $vpn = -$request->capex + ($flujoOperativo / (1 + $tasaDescuento));
+    
+    // Cálculo de cuota y RCSD (Simplificado)
+    $tasaInteresMes = 0.15 / 12;
+    $cuotaMensual = ($request->capex * $tasaInteresMes) / (1 - pow(1 + $tasaInteresMes, -$request->plazo_meses));
+    $pagoDeudaAnual = $cuotaMensual * 12;
+    
+    $rcsd = ($pagoDeudaAnual > 0) ? ($flujoOperativo / $pagoDeudaAnual) : 0;
+
+    // 2. CONEXIÓN CON INTELIGENCIA ARTIFICIAL (PYTHON)
+    $probabilidad_ia = 0;
+    $recomendacion_ia = "No se pudo conectar con la IA.";
+
+    try {
         
-        LogAuditoria::create([
-        'user_id' => Auth::id(),
-        'accion' => "Creación de estudio de factibilidad: " . $estudio->nombre_proyecto,
-        'ip_address' => $request->ip()
+        $response = Http::post('http://127.0.0.1:5000/predecir', 
+        [
+            'inflacion' => $request->inflacion / 100,
+            'tasa_cambio' => $request->tasa_cambio,
+            'capex' => $request->capex,
+            'opex' => $request->opex,
+            'plazo_meses' => $request->plazo_meses,
+            'vpn' => $vpn,
+            'rcsd' => $rcsd
         ]);
 
-        //(Por ahora) Redirigimos de vuelta al dashboard con mensaje de éxito
-        // Más adelante, aquí llamaremos a la IA y redirigiremos al Paso 2 (Resultados)
-        return redirect()->route('dashboard')->with('success', 'Estudio guardado correctamente y listo para evaluar.');
+        if ($response->successful()) {
+            $data = $response->json();
+            
+            // Si Python procesó todo bien:
+            if (isset($data['exito']) && $data['exito'] == true) {
+                $probabilidad_ia = $data['probabilidad'];
+                $recomendacion_ia = $data['recomendacion'];
+            } else {
+                // Si Python tuvo un error interno (ej: librerías desactualizadas)
+                $recomendacion_ia = "Error de Python: " . ($data['error'] ?? 'Desconocido');
+            }
+        } else {
+            $recomendacion_ia = "Error HTTP: " . $response->status();
+        }
+    } catch (\Exception $e) {
+        // Si Laravel no encuentra el servidor 127.0.0.1:5000
+        $recomendacion_ia = "Fallo de conexión: " . $e->getMessage();
+    }
+
+    // 3. GUARDAR TODO EN BASE DE DATOS
+    $estudio = Estudio::create(array_merge($request->all(), [
+        'vpn' => $vpn,
+        'rcsd' => $rcsd,
+        'probabilidad_ia' => $probabilidad_ia,
+        'recomendacion_ia' => $recomendacion_ia
+    ]));
+
+    // 4. REGISTRAR PISTA DE AUDITORÍA (SARO)
+    LogAuditoria::create([
+        'user_id' => Auth::id(),
+        'accion' => "Creación y evaluación de estudio: " . $estudio->nombre_proyecto . " (IA: ".$probabilidad_ia."%)",
+        'ip_address' => $request->ip()
+    ]);
+
+    // Redirigir al dashboard
+   return redirect()->route('estudios.show', $estudio->id)->with('success', 'Análisis completado con éxito.');
+
+
+}
+    public function show($id)
+    {
+    $estudio = Estudio::findOrFail($id);
+    return view('estudios.show', compact('estudio'));
     }
 }

@@ -1,37 +1,37 @@
+
 from flask import Flask, request, jsonify
-import pickle
+import joblib
 import pandas as pd
 
 app = Flask(__name__)
 
-# 1. Cargar el modelo entrenado
-modelo = pickle.load(open('modelo_rf.pkl', 'rb')) 
+# 1. Cargar el modelo entrenado con Joblib
+modelo = joblib.load('modelo_rf.pkl')
+
 
 @app.route('/predecir', methods=['POST'])
 def predecir():
     try:
-        # Recibir los datos de Laravel
+        # Recibir los datos enviados desde Laravel
         datos = request.json
-        
-        # Convertir los datos a una tabla que el modelo entienda (DataFrame)
-        # Las llaves deben ser idénticas a las columnas con las que entrenaste en Colab
-        df = pd.DataFrame([{
-            'inflacion_ipc': float(datos['inflacion']),
-            'trm_promedio': float(datos['tasa_cambio']),
-            'capex_millones': float(datos['capex']),
-            'opex_proyectado': float(datos['opex']),
-            'plazo_meses': int(datos['plazo_meses']),
-            'tasa_interes': 0.15, # Tasa simulada (15%)
-            'vpn_proyectado': float(datos['vpn']),
-            'rcsd': float(datos['rcsd'])
-        }])
+        print("Datos recibidos de Laravel:", datos)
 
-        # 2. Hacer la predicción (predict_proba devuelve % de fracaso y % de éxito)
-        probabilidad = modelo.predict_proba(df)[0][1] # Tomamos la probabilidad de éxito (1)
+        # Convertir los datos a un DataFrame
+        datos_para_ia = [[
+            float(datos['vpn']) / 1000000,  # 1. vpn_proyectado (en millones)
+            float(datos['rcsd'])            # 2. rcsd (ratio puro)
+        ]]
+        # Realizar predicción
+        probabilidad = modelo.predict_proba(datos_para_ia)[0][1] 
         porcentaje_exito = round(probabilidad * 100, 2)
-        
-        # Generar recomendación (Explicabilidad)
-        recomendacion = "Viable." if porcentaje_exito >= 70 else "Riesgoso. Revisar Ratio de Deuda."
+
+        # Generar recomendación
+        if porcentaje_exito >= 70:
+            recomendacion = "PROYECTO VIABLE: El flujo de caja cubre la deuda holgadamente y genera valor (VPN positivo)."
+        elif porcentaje_exito >= 40:
+            recomendacion = "RIESGO MODERADO: El proyecto sobrevive, pero el margen ante imprevistos es estrecho."
+        else:
+            recomendacion = "ALTO RIESGO: El Ratio de Deuda es peligroso o el proyecto destruye valor. No se recomienda invertir."
 
         return jsonify({
             'exito': True,
@@ -40,8 +40,9 @@ def predecir():
         })
 
     except Exception as e:
+        print("ERROR EN PYTHON:", str(e)) # Muestra el error real en la terminal
         return jsonify({'exito': False, 'error': str(e)})
 
+
 if __name__ == '__main__':
-    # El servidor Python correrá en el puerto 5000
     app.run(port=5000, debug=True)

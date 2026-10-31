@@ -35,6 +35,8 @@ Route::middleware('auth')->group(function () {
     //Módulo de Estudios
     Route::get('/estudios/nuevo', [EstudioController::class, 'create'])->name('estudios.create');
     Route::post('/estudios/guardar', [EstudioController::class, 'store'])->name('estudios.store');
+    Route::get('/estudios/{id}/resultados', [EstudioController::class, 'show'])->name('estudios.show');
+    Route::delete('/estudios/{id}', [EstudioController::class, 'destroy'])->name('estudios.destroy');
 
     //Menú
     Route::get('/mis-estudios', function () { return "Vista en construcción"; })->name('estudios.index');
