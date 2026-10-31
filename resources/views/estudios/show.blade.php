@@ -80,11 +80,12 @@
     </div>
 
     <!-- BOTONES FINALES DE SARC/SARO -->
-    <div class="d-flex gap-3 justify-content-end mt-4">
-        <button class="btn btn-outline-danger px-4 py-2" style="border-radius: 8px;">Rechazar y Bloquear</button>
-        <button class="btn btn-success px-4 py-2 shadow-sm" style="background-color: #059669; border:none; border-radius: 8px;">
-            Aprobar Inversión
-        </button>
+    <div class="d-flex justify-content-end mt-4">
+        <form action="{{ route('dashboard') }}" method="GET">
+            <input type="hidden" name="mensaje" value="Estudio guardado con éxito.">
+            <button type="submit" class="btn btn-primary px-5 py-2 shadow-sm" style="background-color: #2563eb; border:none; border-radius: 8px;">
+                <i class="bi bi-save me-2"></i> Guardar y Finalizar
+            </button>
+        </form>
     </div>
-</div>
 @endsection

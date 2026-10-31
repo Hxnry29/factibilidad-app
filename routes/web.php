@@ -39,6 +39,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/estudios/{id}', [EstudioController::class, 'destroy'])->name('estudios.destroy');
 
     //Menú
-    Route::get('/mis-estudios', function () { return "Vista en construcción"; })->name('estudios.index');
+    #Route::get('/mis-estudios', function () { return "Vista en construcción"; })->name('estudios.index');
     #Route::get('/auditoria', function () { return "Vista en construcción"; })->name('auditoria.index');
 });

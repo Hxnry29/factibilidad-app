@@ -12,9 +12,17 @@
 </a>
     </div>
 
+   <!-- Alertas del sistema -->
     @if(session('success'))
         <div class="alert alert-success border-0 shadow-sm rounded-3 mb-4">
             <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+        </div>
+    @endif
+
+    <!-- Alerta cuando viene desde el botón Guardar de la vista Show -->
+    @if(request()->has('mensaje'))
+        <div class="alert alert-success border-0 shadow-sm rounded-3 mb-4">
+            <i class="bi bi-check-circle-fill me-2"></i> {{ request()->mensaje }}
         </div>
     @endif
 
@@ -41,10 +49,18 @@
                         <!-- Por ahora pondremos un texto estático hasta que le amarremos el ID del usuario al estudio -->
                         <td class="py-3 text-secondary">Analista del sistema</td> 
                         <td class="py-3">
-                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-normal">
-                        {{ $estudio->estado ?? 'Evaluado' }}
-                    </span>
-                    </td>
+    <!-- Si en la BD dice Guardado, o por defecto si está vacío -->
+    @if($estudio->estado == 'Guardado' || $estudio->estado == 'Borrador')
+        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-medium">
+            <i class="bi bi-check2-circle me-1"></i> Guardado
+        </span>
+    @else
+        <!-- Para otros estados futuros como Bloqueado o Aprobado -->
+        <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill fw-medium">
+            {{ $estudio->estado }}
+        </span>
+    @endif
+</td>
                     <td class="pe-4 py-3 text-end">
     <div class="d-flex justify-content-end gap-2">
         <!-- Botón Ver Resultados -->
